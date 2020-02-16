@@ -1,4 +1,4 @@
-# PasStrong bluetooth password strength dongle
+# PassStrong bluetooth password protection
 
 The PassStrong BlueTooth Dongle uses a 14$ Esp32 dongle to generate, securely store (with limitations, see hereunder) and types strong passwords.
 
@@ -16,7 +16,7 @@ The installation is quite straightforward if you are used to arduino & esp32. if
 
 # 2) Instructions
 
-Based on M5Stick ESP32 dongle (includes a screen and a battery).
+For the first setup or after the Eprom is wiped using the code provided in the Utils directory, you will need to define the pincode and to regenerate the password.
 
 a) Settings
 
@@ -35,15 +35,17 @@ When it is connected you see the main screen with 3 locks.
 	Keyboard language setting:
      - Press "action" to shift from aazrty to qwerty and back
 	Password regenerating
-	 - Press "action" twice to erase old password and to output the old password and to generate a new one. Nb : after you do this, there is no way to restore the old password
+	 - Press "action" twice to erase old password.
+	This will output the old password and to generate a new one. Nb : after this, there is no way to restore the old password. You should note it somewhere if you need to change your password on a site
 	 - Press mode again to come back to the main menu
 
 # 3) Security concerns and future developments
 
 In case you lose the pincode, you can wipe the Eprom and reuse the device using the sketch provided in the Utils directory.
 
-In a next version, I will implement a pincode on the bluetooth connection. The password is stored in the EEPROM, but crypted using AES (thanks to CNLohr for the nice routine) and a 32 bytes key you provide in the code (it is recommended to flash a different key with all the versions of the key - else it is easy to retrieve the crypted password from the EEPROM by flashing a new version of the software, then to decrypt it).
-
-If the dongle is found, it is possible to retrieve the key by accessing the flasmemory of the chip, and then to decrypt the password which is stored in the EEPROM, but it requires some hardware expertise.
-
-If the dongle is found unlit, then the pincode is needed to unlock the key. 
+As this is more a proof of concept than a finished product, there are a couple of security limitations:
+   -in a next version, I will implement a pincode on the bluetooth connection
+   -the password is stored in the EEPROM, crypted using AES (thanks to CNLohr for the nice routine) and a 32 bytes generated using AFACTOR and BFACTOR provided in the code. It is strongly recommended to use different values for theses parameters for each of the dongles. If you do not do it, it is easy to retrieve the crypted password from the EEPROM by flashing a new version of the software, then to decrypt it
+   -if the dongle is found, it is possible to retrieve the key by accessing the flashmemory of the chip, and then to decrypt the password which is stored in the EEPROM, but it requires some hardware skills.
+ 
+ If the dongle is found unlit, then the pincode is needed to unlock the key. 
