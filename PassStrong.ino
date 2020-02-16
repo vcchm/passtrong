@@ -158,7 +158,7 @@ void dosmall(){
          showbit(sending);
          bttype();
          dmode=-1;
-         confgen=canwrite=0;
+         confgen=0;
          refresh=80;}
         break;
     case 7: // Regen menu
