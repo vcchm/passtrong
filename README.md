@@ -2,11 +2,11 @@
 
 The PassStrong BlueTooth Dongle uses a 14$ Esp32 dongle to generate, securely store (with limitations, see hereunder) and types strong passwords.
 
-0) Hardware
+# 0) Hardware
 
 Uses an ESP32-based M5StickC dongle (https://www.aliexpress.com/wholesale?catId=0&initiative_id=SB_20200216013739&SearchText=m5stickc ). You will need to install M5StickC libraries, as well as BLEkeybaord library (i used a modified version that allows you to change the kind of device used, but you can go without it).
 
-1) What it does
+# 1) What it does
 
 After connection to your PC/mobile phone (as a bluetooth keyboard), enters a long and complex password impossible to remember but stronger than your 8 letters password.
 
@@ -14,7 +14,7 @@ The dongle is protected by a pincode (length is set to 4 digits, but can be augm
 
 The installation is quite straightforward if you are used to arduino & esp32. if not, just google for examples, there are many of them on the internet.
 
-2) Instructions
+# 2) Instructions
 
 Based on M5Stick ESP32 dongle (includes a screen and a battery).
 
@@ -38,7 +38,9 @@ When it is connected you see the main screen with 3 locks.
 	 - Press "action" twice to erase old password and to output the old password and to generate a new one. Nb : after you do this, there is no way to restore the old password
 	 - Press mode again to come back to the main menu
 
-3) Security concerns and future developments
+# 3) Security concerns and future developments
+
+In case you lose the pincode, you can wipe the Eprom and reuse the device using the sketch provided in the Utils directory.
 
 In a next version, I will implement a pincode on the bluetooth connection. The password is stored in the EEPROM, but crypted using AES (thanks to CNLohr for the nice routine) and a 32 bytes key you provide in the code (it is recommended to flash a different key with all the versions of the key - else it is easy to retrieve the crypted password from the EEPROM by flashing a new version of the software, then to decrypt it).
 
