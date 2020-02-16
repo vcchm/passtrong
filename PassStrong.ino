@@ -118,15 +118,15 @@ void setup(void) {
   bleKeyboard.begin();
   randomSeed(esp_random());
   if ((EEPROM.readChar(CODELEN)!='O')||(EEPROM.readChar(CODELEN+1)!='K')){
-   regen();
-   dmode=1; // Enter pinset mode
-   canwrite=1;
+   for (int i=0;i<CODELEN;++i) EEPROM.writeChar(i,'0');
+   regen(); // Generate a password to avoid problem with random non ascii characters
+   canwrite=1; // Allow pin change
   } else canwrite=0;
 }
 
 // Pincheck
 int pincheck(){
-   for (int i=0;i<CODELEN;++i) if (pin[i]!=EEPROM.read(i)) return(0);
+   for (int i=0;i<CODELEN;++i) if (pin[i]!=EEPROM.readChar(i)) return(0);
    return(1);}
 
 // Settings status
@@ -152,69 +152,71 @@ void setstat(){
 
 // Action if small button pressed
 void dosmall(){
-  if (dmode){ // Settings menu
-    if (dmode==7){
-     if (confgen==0) confgen=1;
-     else{ 
-      confgen=0;      
-      if (pincheck()){
-       bttype();
-       regen();
-       M5.Lcd.setCursor(0,90);  
-       M5.Lcd.print("Regnd");
-       delay(300);  
-       refresh=80;
-       dmode=-1;}
-     }
-    }
-    else if (dmode==6) passn=(passn+1)%2; // AZ/QW ERTY shift
-    else if (dmode==5) {
-      if (canwrite==1){
-        M5.Lcd.setCursor(0,36);  
-        M5.Lcd.print("Chnged");
-        delay(300); 
-        for (int i=0;i<CODELEN;++i) opin[i]=EEPROM.readChar(i); 
-        decrypt(opin); // Decryot password with old pin
-        for (int i=0;i<CODELEN;++i) EEPROM.writeChar(i,pin[i]);
-        EEPROM.writeChar(CODELEN,'O');
-        EEPROM.writeChar(CODELEN+1,'K');
-        encrypt();
-        canwrite=0;
-        dmode+=1;}
-      else {
+  switch(dmode){
+    case 0: // Home menu
+        if (pincheck()){
+         showbit(sending);
+         bttype();
+         dmode=-1;
+         confgen=canwrite=0;
+         refresh=80;}
+        break;
+    case 7: // Regen menu
+        if (confgen==0) confgen=1; // Ask for confirmation
+        else{    
+          confgen=0;               // Confirmed     
           if (pincheck()){
-           M5.Lcd.setCursor(0,36);  
-           M5.Lcd.print("=>Chg");
+           bttype();
+           regen();
+           M5.Lcd.setCursor(0,90);  
+           M5.Lcd.print("Regnd");
+           delay(300);  
+           refresh=80;
+           dmode=-1;}
+        break;
+    case 6: 
+        canwrite=0;
+        passn=(passn+1)%2; // AZ/QW ERTY shift
+        break;
+    case 5: // Change pin
+        if (canwrite){  // Is it possible (either entered correct pin, or no pin set)
+          M5.Lcd.setCursor(0,36);  
+          M5.Lcd.print("Chnged");
+          delay(300); 
+          for (int i=0;i<CODELEN;++i) opin[i]=EEPROM.readChar(i); 
+          decrypt(opin); // Decryot password with old pin
+          for (int i=0;i<CODELEN;++i) EEPROM.writeChar(i,pin[i]);
+          EEPROM.writeChar(CODELEN,'O');
+          EEPROM.writeChar(CODELEN+1,'K');
+          encrypt();
+          dmode+=1;}
+        else{  // First pass on the menu
+          if (pincheck()){ // If pin is correct then back to pin to enter the new one
            dmode=1;
            canwrite=1;
+           M5.Lcd.setCursor(0,36);  
+           M5.Lcd.print("=>Chg");
            delay(300);}  
         }
-      }
-    else{ 
-      pin[dmode-1]=pin[dmode-1]>='9'?'0':pin[dmode-1]+1;}
-    setstat();
-    refresh=2*300/DELAYL;}
-  else{ // Normal menu
-     if (pincheck()){
-     showbit(sending);
-     bttype();
-     dmode=-1;
-     refresh=80;}
+        break;
+    case 1: case 2: case 3: case 4:
+        pin[dmode-1]=pin[dmode-1]>='9'?'0':pin[dmode-1]+1;}
+        setstat();
+        refresh=2*300/DELAYL;
+        break;
   }
 }
 
 void dobig(){
  dmode=(dmode+1)%8;
- if (dmode==0){
-   showbit(menu);
-   }
-  else setstat();
-   refresh=20;
+ if (dmode==0) showbit(menu);
+ else setstat();
+ refresh=20;
 }
 
 void loop() {
-refresh-=2;
-if (refresh<=0){
+ refresh-=2;
+ if (refresh<=0){
   refresh+=11;
   if (bleKeyboard.isConnected()){
     if (dmode<0){
@@ -232,10 +234,10 @@ if (refresh<=0){
   else {
     showbit(refresh&1?init1:init2);
     dmode=-2;
-#ifdef DEBUG
+ #ifdef DEBUG
   Serial.println(refresh);
-#endif
+ #endif
     }
   }
-delay(DELAYL);
+ delay(DELAYL);
 }
