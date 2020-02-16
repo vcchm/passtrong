@@ -1,12 +1,10 @@
-# passtrong
+# PasStrong bluetooth password strength dongle
 
-PassStrong BlueTooth Dongle
-
-Uses a 14$ Esp32 dongle to generate, securely store (with limitations, see hereunder) and types strong passwords.
+The PassStrong BlueTooth Dongle uses a 14$ Esp32 dongle to generate, securely store (with limitations, see hereunder) and types strong passwords.
 
 0) Hardware
 
-Uses an ESP32-based M5StickC dongle (https://www.aliexpress.com/wholesale?catId=0&initiative_id=SB_20200216013739&SearchText=m5stickc ). You'll need to install M5StickC libraries, as well as BLEkeybaord library (i used a modified version that allows you to change the kind of device used, but you can go without it).
+Uses an ESP32-based M5StickC dongle (https://www.aliexpress.com/wholesale?catId=0&initiative_id=SB_20200216013739&SearchText=m5stickc ). You will need to install M5StickC libraries, as well as BLEkeybaord library (i used a modified version that allows you to change the kind of device used, but you can go without it).
 
 1) What it does
 
