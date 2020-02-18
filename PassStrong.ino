@@ -10,8 +10,8 @@ BleKeyboard bleKeyboard(DEVICE_NAME,"PassStrong",99,HID_TYPE); // The last param
 int refresh=3000/DELAYL;// Main loop Counter 
 int dmode=-1;           // Mode -1:Try to connect 0: Main Menu 1,2,3,4,5: Passn choice menu
 int canwrite=0;         // Pin write mode ? 
-char pin[CODELEN];      // Pin code
-char opin[CODELEN];     // Pin backup for code change
+char pin[CODELEN+2];      // Pin code
+char opin[CODELEN+2];     // Pin backup for code change
 int passn=0;            // Mode qwerty or azerty
 int confgen=0;          // Regen confirmation mode
 
@@ -90,6 +90,9 @@ void bttype(){
   bleKeyboard.releaseAll();
   delay(DELUL*4);
   decrypt();
+#ifdef DEBUG
+  Serial.println(modest[passn]);
+#endif
   if (passn) azkprint(password);
   else qwprint(password);
   clearpass();
@@ -120,8 +123,7 @@ void setup(void) {
   if ((EEPROM.readChar(CODELEN)!='O')||(EEPROM.readChar(CODELEN+1)!='K')){
    for (int i=0;i<CODELEN;++i) EEPROM.writeChar(i,'0');
    regen(); // Generate a password to avoid problem with random non ascii characters
-   canwrite=1; // Allow pin change
-  } else canwrite=0;
+  };
 }
 
 // Pincheck
@@ -135,25 +137,33 @@ void setstat(){
   M5.Lcd.setTextColor(TFT_WHITE);  // Adding a background colour erases previous text automatically
   M5.Lcd.setTextSize(2);
   M5.Lcd.setCursor(0,00);  
-  M5.Lcd.print(dmode<5?">Pin:":"Pin:");
+  M5.Lcd.print("Pin:");
   M5.Lcd.setCursor(0,18);  
-  M5.Lcd.print(String(pin));  
-  M5.Lcd.setCursor(0,36);  
-  M5.Lcd.print(dmode==5?">Chnge":"Change");  
+  M5.Lcd.print(String(pin));
+  if ((dmode>0)&&(dmode<5)){
+    int j;
+    for (j=0;j<dmode-1;) opin[j++]=' ';
+    opin[j]='^';
+    opin[j+1]=0;  
+    M5.Lcd.setCursor(0,36);
+    M5.Lcd.print(String(opin));
+  }  
   M5.Lcd.setCursor(0,54);  
-  M5.Lcd.print(dmode==6?">Mode:":"Mode:");  
+  M5.Lcd.print(dmode==5?">Chnge":"Change");  
   M5.Lcd.setCursor(0,72);  
-  M5.Lcd.print(modest[passn]);  
+  M5.Lcd.print(dmode==6?">Mode:":"Mode:");  
   M5.Lcd.setCursor(0,90);  
-  M5.Lcd.print(dmode==7?(confgen==1?"*Regen":">Regen"):"Regen");  
+  M5.Lcd.print(modest[passn]);  
   M5.Lcd.setCursor(0,108);  
+  M5.Lcd.print(dmode==7?(confgen==1?"*Regen":">Regen"):"Regen");  
+  M5.Lcd.setCursor(0,126);  
   M5.Lcd.print((EEPROM.readChar(CODELEN)=='O')&&(EEPROM.readChar(CODELEN+1)=='K')?"Pinset":"No pin");  
 }
 
 // Action if small button pressed
 void dosmall(){
   switch(dmode){
-    case 0: // Home menu
+    case 0: case -1:// Home menu
         if (pincheck()){
          showbit(sending);
          bttype();
@@ -168,9 +178,9 @@ void dosmall(){
           if (pincheck()){
            bttype();
            regen();
-           M5.Lcd.setCursor(0,90);  
-           M5.Lcd.print("Regnd");
-           delay(300);  
+           M5.Lcd.setCursor(0,108);  
+           M5.Lcd.print("#");
+           delay(300);
            refresh=80;
            dmode=-1;}
         break;
@@ -179,9 +189,9 @@ void dosmall(){
         passn=(passn+1)%2; // AZ/QW ERTY shift
         break;
     case 5: // Change pin
-        if (canwrite){  // Is it possible (either entered correct pin, or no pin set)
-          M5.Lcd.setCursor(0,36);  
-          M5.Lcd.print("Chnged");
+        if (canwrite||(EEPROM.readChar(CODELEN)!='O')||(EEPROM.readChar(CODELEN+1)!='K')){  // Is it possible (either entered correct pin, or no pin set)
+          M5.Lcd.setCursor(0,54);  
+          M5.Lcd.print("#");
           delay(300); 
           for (int i=0;i<CODELEN;++i) opin[i]=EEPROM.readChar(i); 
           decrypt(opin); // Decryot password with old pin
@@ -194,17 +204,17 @@ void dosmall(){
           if (pincheck()){ // If pin is correct then back to pin to enter the new one
            dmode=1;
            canwrite=1;
-           M5.Lcd.setCursor(0,36);  
-           M5.Lcd.print("=>Chg");
+           M5.Lcd.setCursor(0,18);  
+           M5.Lcd.print("####");
            delay(300);}  
         }
         break;
     case 1: case 2: case 3: case 4:
         pin[dmode-1]=pin[dmode-1]>='9'?'0':pin[dmode-1]+1;}
-        setstat();
         refresh=2*300/DELAYL;
         break;
   }
+  if (dmode>0) setstat();
 }
 
 void dobig(){
